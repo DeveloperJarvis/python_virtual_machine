@@ -30,8 +30,29 @@
 # --------------------------------------------------
 # debug MODULE
 # --------------------------------------------------
-
+"""
+Debug and tracing utilities.
+"""
 # --------------------------------------------------
 # imports
 # --------------------------------------------------
+from config.config import DEBUG, TRACE_EXECUTION
 
+
+def debug_log(message: str):
+    """
+    Print debug message if DEBIG is enabled.
+    """
+    if DEBUG:
+        print(f"[DEBUG] {message}")
+
+
+def trace_instruction(ip, opcode, operands, stack):
+    """
+    Trace instruction execution if tracing is enabled.
+    """
+    if TRACE_EXECUTION:
+        print(
+            f"[TRACE] IP={ip} | {opcode} {operands} | "
+            f"STACK={list(stack._stack)}"
+        )

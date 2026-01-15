@@ -1,0 +1,11 @@
+# Simple arithmetic examples
+# Computes (2 + 3) * 4
+
+
+LOAD_CONST 2
+LOAD_CONST 3
+ADD
+LOAD_CONST 4
+MUL
+STORE_VAR result
+HALT

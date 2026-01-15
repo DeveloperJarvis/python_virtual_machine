@@ -30,8 +30,47 @@
 # --------------------------------------------------
 # disassembler MODULE
 # --------------------------------------------------
+"""
+Bytecode Disassembler.
 
+Converts VM bytecode into a readable, annotated format.
+"""
 # --------------------------------------------------
 # imports
 # --------------------------------------------------
+from typing import List, Tuple
 
+
+# --------------------------------------------------
+# disassembler
+# --------------------------------------------------
+class Disassembler:
+    """
+    Disassembles parsed bytecode instructions.
+    """
+
+    def disassemble(self, instructions: List[Tuple[str, list]]
+                    ) -> str:
+        """
+        Convert parsed instructions into readable text.
+        """
+        lines = []
+
+        for index, (opcode, operands) in enumerate(instructions):
+            operand_str = " ".join(operands)
+            line = f"{index:04d}  {opcode}"
+
+            if operand_str:
+                line += f" {operand_str}"
+            
+            lines.append(line)
+        
+        return "\n".join(lines)
+    
+    def disassemble_file(self, path: str, loader, parser) -> str:
+        """
+        Load and disassemble a bytecode file.
+        """
+        raw = loader.load_from_file(path)
+        instructions = parser.parse(raw)
+        return self.disassemble(instructions)

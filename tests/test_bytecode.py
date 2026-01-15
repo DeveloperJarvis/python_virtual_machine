@@ -34,4 +34,45 @@
 # --------------------------------------------------
 # imports
 # --------------------------------------------------
+import pytest
 
+from vm.bytecode import BytecodeLoader, BytecodeParser
+from vm.errors import BytecodeError
+
+
+def test_bytecode_loader_from_string():
+    source = """
+        LOAD_CONST 10
+        LOAD_CONST 20
+        ADD
+    """
+    loader = BytecodeLoader()
+    result = loader.load_from_file(source)
+
+    assert result == [
+        "LOAD_CONST 10",
+        "LOAD_CONST 20",
+        "ADD",
+    ]
+
+
+def test_bytecode_parser_valid():
+    raw = [
+        "LOAD_CONST 5",
+        "LOAD_CONST 6",
+        "ADD",
+    ]
+    parser = BytecodeParser()
+    parsed = parser.parse(raw)
+
+    assert parsed[0] == ("LOAD_CONST", ["5"])
+    assert parsed[1] == ("LOAD_CONST", ["6"])
+    assert parsed[2] == ("ADD", [])
+
+
+def test_bytecode_parser_invalid_opcode():
+    raw = ["INVALID_OP 123"]
+    parser = BytecodeParser()
+    
+    with pytest.raises(ValueError):
+        parser.parse(raw)

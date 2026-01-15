@@ -30,8 +30,44 @@
 # --------------------------------------------------
 # frame MODULE
 # --------------------------------------------------
-
+"""
+Execution frame implementation.
+"""
 # --------------------------------------------------
 # imports
 # --------------------------------------------------
+from vm.stack import OperandStack
+from vm.memory import Namespace
 
+
+# --------------------------------------------------
+# frame
+# --------------------------------------------------
+class Frame:
+    """
+    Represents a single execution frame.
+    """
+
+    def __init__(self, instructions, globals_ns, locals_ns=None):
+        self.instructions = instructions
+        self.ip = 0
+        self.stack = OperandStack()
+        self.locals = locals_ns or Namespace(parent=globals_ns)
+        self.globals = globals_ns
+    
+    def next_instruction(self):
+        """
+        Fetch the next instruction and advance IP.
+        """
+        if self.ip >= len(self.instructions):
+            return None
+        
+        instr = self.instructions[self.ip]
+        self.ip += 1
+        return instr
+    
+    def jump(self, target: int):
+        """
+        Set instruction pointer.
+        """
+        self.ip = target

@@ -30,8 +30,34 @@
 # --------------------------------------------------
 # __init__ MODULE
 # --------------------------------------------------
+"""
+VM error handling package.
 
+Defines all custom exceptions raised during
+bytecode parsing and execution.
+"""
 # --------------------------------------------------
 # imports
 # --------------------------------------------------
+from .exceptions import (
+    VMError,
+    BytecodeError,
+    InvalidOpcodeError,
+    StackUnderflowError,
+    StackOverflowError,
+    VariableNotFoundError,
+    RuntimeExecutionError,
+    CallStackOverflowError,
+)
 
+
+__all__ = [
+    "VMError",
+    "BytecodeError",
+    "InvalidOpcodeError",
+    "StackUnderflowError",
+    "StackOverflowError",
+    "VariableNotFoundError",
+    "RuntimeExecutionError",
+    "CallStackOverflowError",
+]

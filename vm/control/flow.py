@@ -30,8 +30,47 @@
 # --------------------------------------------------
 # flow MODULE
 # --------------------------------------------------
-
+"""
+Control flow operations.
+"""
 # --------------------------------------------------
 # imports
 # --------------------------------------------------
+from vm.errors import RuntimeExecutionError
 
+
+# --------------------------------------------------
+# control flow
+# --------------------------------------------------
+class ControlFlow:
+    """
+    Handles jump and branching logic.
+    """
+
+    @staticmethod
+    def jump(frame, target: int):
+        """
+        Perform an unconditional jump.
+        """
+        if target < 0 or target >= len(frame.instructions):
+            raise RuntimeExecutionError(
+                f"Invalid jump target: {target}"
+            )
+        
+        frame.jump(target)
+    
+    @staticmethod
+    def jump_if_true(frame, condition, target: int):
+        """
+        Jump if condition evaluates to True.
+        """
+        if condition:
+            ControlFlow.jump(frame, target)
+    
+    @staticmethod
+    def jump_if_false(frame, condition, target: int):
+        """
+        Jump if condition evaluates to False.
+        """
+        if not condition:
+            ControlFlow.jump(frame, target)

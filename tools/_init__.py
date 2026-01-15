@@ -30,8 +30,21 @@
 # --------------------------------------------------
 # _init__ MODULE
 # --------------------------------------------------
+"""
+Tooling package for the Python Virtual Machine.
 
+Includes utilities such as:
+- Assembler (text -> bytecode)
+- Disassembler (bytecode -> readable form)
+"""
 # --------------------------------------------------
 # imports
 # --------------------------------------------------
+from .assembler import Assembler
+from .disassembler import Disassembler
 
+
+__all__ = [
+    "Assembler",
+    "Disassembler",
+]

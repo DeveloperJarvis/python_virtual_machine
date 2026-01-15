@@ -1,0 +1,14 @@
+# Conditional example
+# If 0 is false, assign x = 42
+
+LOAD_CONST 0
+JUMP_IF_FALSE 5
+
+LOAD_CONST 99
+STORE_VAR x
+JUMP 6
+
+LOAD_CONST 42
+STORE_VAR x
+
+HALT

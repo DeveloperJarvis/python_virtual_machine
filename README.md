@@ -18,6 +18,37 @@ The goal is **educational and architectural clarity**, not full Python compatibi
 
 ---
 
+## 🏃🏻‍♂️ How to run
+
+```bash
+# setup environment
+python -m venv .env
+# start environment
+.env\Scripts\activate   # Windows
+# OR
+source .env/bin/activate    # Linux
+
+# setup project
+pip install -e .
+
+# execute example
+python run_example.py examples/simple_arithmetic.bc
+python run_example.py examples/conditionals.bc
+```
+
+## 🧪 How to test
+
+```bash
+## Testing
+# ensure inside env
+# setup project for testing using dev
+pip install -e .[dev]
+# run tests
+pytest -v
+```
+
+---
+
 ## 🎯 Key Objectives
 
 - Understand how Python executes code internally

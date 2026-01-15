@@ -26,6 +26,8 @@ REM Create files only if they do not exist
 REM Python source files (with header)
 call :create_py_file "%ROOT%\setup.py"
 
+call :create_py_file "%ROOT%\run_example.py"
+
 call :create_py_file "%ROOT%\config\_init__.py"
 call :create_py_file "%ROOT%\config\config.py"
 
@@ -68,6 +70,7 @@ call :create_file "%ROOT%\docs\execution_model.md"
 call :create_file "%ROOT%\examples\simple_arithmetic.bc"
 call :create_file "%ROOT%\examples\conditionals.bc"
 call :create_file "%ROOT%\examples\function_call.bc"
+@REM call :create_file "%ROOT%\examples\function_call_alter.bc"
 
 call :create_file "%ROOT%\logs\vm.log"
 

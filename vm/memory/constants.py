@@ -30,8 +30,42 @@
 # --------------------------------------------------
 # constants MODULE
 # --------------------------------------------------
+"""
+Constants pool.
 
+Stores immutable constants used by bytecode.
+"""
 # --------------------------------------------------
 # imports
 # --------------------------------------------------
 
+
+# --------------------------------------------------
+# constants pool
+# --------------------------------------------------
+class ConstantsPool:
+    """
+    Manages constants referenced by bytecode.
+    """
+
+    def __init__(self):
+        self._constants = []
+    
+    def add(self, value):
+        """
+        Add a constant and return its index.
+        """
+        self._constants.append(value)
+        return len(self._constants) - 1
+    
+    def get(self, index: int):
+        """
+        Retrieve a constant by index.
+        """
+        try:
+            return self._constants[index]
+        except IndexError:
+            raise IndexError(f"Invalid constant index: {index}")
+    
+    def __len__(self):
+        return len(self._constants)

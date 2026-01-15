@@ -30,8 +30,52 @@
 # --------------------------------------------------
 # callstack MODULE
 # --------------------------------------------------
-
+"""
+Call stack implementation.
+"""
 # --------------------------------------------------
 # imports
 # --------------------------------------------------
+from config.config import MAX_CALL_DEPTH
+from vm.errors import CallStackOverflowError
 
+
+# --------------------------------------------------
+# call stack
+# --------------------------------------------------
+class CallStack:
+    """
+    Manages execution frames.
+    """
+
+    def __init__(self):
+        self._frames = []
+    
+    def push(self, frame):
+        """
+        Push a new frame onto the call stack.
+        """
+        if len(self._frames) >= MAX_CALL_DEPTH:
+            raise CallStackOverflowError(
+                "Maximum call stack depth exceeded"
+            )
+        
+        self._frames.append(frame)
+    
+    def pop(self):
+        """
+        Pop the current frame.
+        """
+        return self._frames.pop()
+    
+    def current(self):
+        """
+        Get the current frame.
+        """
+        if not self._frames:
+            return None
+        
+        return self._frames[-1]
+    
+    def is_empty(self) -> bool:
+        return not self._frames

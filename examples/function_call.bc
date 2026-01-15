@@ -1,0 +1,13 @@
+# Push function
+LOAD_VAR add
+
+# Push arguments
+LOAD_CONST 2
+LOAD_CONST 3
+
+# Call function with 2 args
+CALL_FUNC 2
+
+# Store result
+STORE_VAR result
+HALT

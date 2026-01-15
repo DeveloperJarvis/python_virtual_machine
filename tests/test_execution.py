@@ -34,4 +34,39 @@
 # --------------------------------------------------
 # imports
 # --------------------------------------------------
+from vm.core.vm import VirtualMachine
 
+
+def test_simple_arithmetic_execution():
+    vm = VirtualMachine()
+
+    source = """
+        LOAD_CONST 2
+        LOAD_CONST 3
+        ADD
+        STORE_VAR result
+        HALT
+    """
+
+    vm.run_string(source)
+
+    assert vm.globals.get("result") == 5
+
+
+def test_variable_assignment():
+    vm = VirtualMachine()
+
+    source = """
+        LOAD_CONST 10
+        STORE_VAR x
+        LOAD_VAR x
+        LOAD_CONST 5
+        MUL
+        STORE_VAR y
+        HALT
+    """
+
+    vm.run_string(source)
+
+    assert vm.globals.get("x") == 10
+    assert vm.globals.get("y") == 50

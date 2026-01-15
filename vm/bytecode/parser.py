@@ -30,8 +30,50 @@
 # --------------------------------------------------
 # parser MODULE
 # --------------------------------------------------
+"""
+Bytecode Parser.
 
+Transforms raw bytecode lines into structured
+instructions representations usable by the VM.
+"""
 # --------------------------------------------------
 # imports
 # --------------------------------------------------
+from typing import List, Tuple
 
+from .instructions import OPCODES
+
+
+# --------------------------------------------------
+# bytecode parser
+# --------------------------------------------------
+class BytecodeParser:
+    """
+    Parses raw bytecode lines into instructions.
+    """
+    
+    def parse(self, raw_instructions: List[str]
+              ) -> List[Tuple[str, List[str]]]:
+        """
+        Parse raw instruction strings into (opcode, operands).
+
+        Example:
+            "LOAD_CONST 10"
+            -> ("LOAD_CONST", ["10"])
+        """
+        parsed_instructions = []
+
+        for index, line in enumerate(raw_instructions):
+            parts = line.split()
+            opcode = parts[0]
+            operands = parts[1:]
+
+            if opcode not in OPCODES:
+                raise ValueError(
+                    f"Invalid opcode '{opcode}' at instruction"
+                    f" {index}"
+                )
+            
+            parsed_instructions.append((opcode, operands))
+        
+        return parsed_instructions

@@ -28,61 +28,21 @@
 # --------------------------------------------------
 
 # --------------------------------------------------
-# stack MODULE
+# run_example MODULE
 # --------------------------------------------------
-"""
-Operand stack implementation.
-"""
+
 # --------------------------------------------------
 # imports
 # --------------------------------------------------
-from vm.errors import StackOverflowError, StackUnderflowError
-from config.config import MAX_STACK_SIZE
+import sys
+from vm.core.vm import VirtualMachine
 
 
-# --------------------------------------------------
-# operand stack
-# --------------------------------------------------
-class OperandStack:
-    """
-    Stack used for operand storage during execution.
-    """
+vm = VirtualMachine()
 
-    def __init__(self):
-        self._stack = []
-    
-    def push(self, value):
-        """
-        Push a value onto the stack.
-        """
-        if len(self._stack) >= MAX_STACK_SIZE:
-            raise StackOverflowError("Operand stack overflow")
-        
-        self._stack.append(value)
-    
-    def pop(self):
-        """
-        Pop a value from the stack.
-        """
-        if not self._stack:
-            raise StackUnderflowError("Operand stack underflow")
-        
-        return self._stack.pop()
-    
-    def peek(self):
-        """
-        Peek at the top value without popping.
-        """
-        if not self._stack:
-            raise StackUnderflowError("Operand stack underflow")
-        
-        return self._stack[-1]
-    
-    def clear(self):
-        """
-        Clear the stack.
-        """
-        self._stack.clear()
-    
-    def __len__(self):
-        return len(self._stack)
+# Inject callable function
+vm.globals.set("add", lambda a, b: a + b)
+
+vm.run_file(sys.argv[1])
+
+print("Globals: ", vm.globals._values)

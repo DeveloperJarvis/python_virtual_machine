@@ -30,8 +30,50 @@
 # --------------------------------------------------
 # vm MODULE
 # --------------------------------------------------
-
+"""
+Top-level Virtual Machine interface.
+"""
 # --------------------------------------------------
 # imports
 # --------------------------------------------------
+from vm.bytecode import BytecodeLoader, BytecodeParser
+from vm.core.runtime import Runtime
+from vm.memory import Namespace
+from vm.stack import Frame
+from vm.utils import debug_log
 
+
+# --------------------------------------------------
+# virtual machine
+# --------------------------------------------------
+class VirtualMachine:
+    """
+    Python Virtual Machine.
+    """
+
+    def __init__(self):
+        self.loader = BytecodeLoader()
+        self.parser = BytecodeParser()
+        self.runtime = Runtime()
+        self.globals = Namespace()
+    
+    def run_file(self, path: str):
+        """
+        Execute bytecode from file.
+        """
+        debug_log(f"Loading bytecode from {path}")
+        raw = self.loader.load_from_file(path)
+        instructions = self.parser.parse(raw)
+        frame = Frame(instructions, self.globals,
+                      locals_ns=self.globals)
+        self.runtime.run(frame)
+    
+    def run_string(self, source: str):
+        """
+        Execute bytecode from string.
+        """
+        raw = self.loader.load_from_string(source)
+        instructions = self.parser.parse(raw)
+        frame = Frame(instructions, self.globals,
+                      locals_ns=self.globals)
+        self.runtime.run(frame)

@@ -30,8 +30,20 @@
 # --------------------------------------------------
 # __init__ MODULE
 # --------------------------------------------------
+"""
+Bytecode handling package.
 
+Responsible for loading, parsing and representing
+bytecode instructions executed by the VM.
+"""
 # --------------------------------------------------
 # imports
 # --------------------------------------------------
+from .loader import BytecodeLoader
+from .parser import BytecodeParser
 
+
+__all__ = [
+    "BytecodeLoader",
+    "BytecodeParser",
+]

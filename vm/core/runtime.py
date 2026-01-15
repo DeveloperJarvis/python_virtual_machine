@@ -30,8 +30,31 @@
 # --------------------------------------------------
 # runtime MODULE
 # --------------------------------------------------
-
+"""
+Runtime coordination.
+"""
 # --------------------------------------------------
 # imports
 # --------------------------------------------------
+from vm.control import CallStack
+from vm.core.engine import ExecutionEngine
 
+
+# --------------------------------------------------
+# runtime
+# --------------------------------------------------
+class Runtime:
+    """
+    Coordinates execution engine and call stack
+    """
+
+    def __init__(self):
+        self.callstack = CallStack()
+        self.engine = ExecutionEngine()
+    
+    def run(self, frame):
+        """
+        Start execution with an initial frame.
+        """
+        self.callstack.push(frame)
+        self.engine.execute(frame, self.callstack)

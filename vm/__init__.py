@@ -30,8 +30,23 @@
 # --------------------------------------------------
 # __init__ MODULE
 # --------------------------------------------------
+"""
+Python Virtual Machine package.
 
+This package provides a custom, stack-based virtual machine
+for parsing bytecode and executing instructions.
+"""
 # --------------------------------------------------
 # imports
 # --------------------------------------------------
 
+
+__all__ = [
+    "bytecode",
+    "control",
+    "core",
+    "errors",
+    "memory",
+    "stack",
+    "utils",
+]

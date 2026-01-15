@@ -30,8 +30,20 @@
 # --------------------------------------------------
 # __init__ MODULE
 # --------------------------------------------------
+"""
+Stack management package.
 
+Provides operand stack and execution frame
+implementaions for the VM.
+"""
 # --------------------------------------------------
 # imports
 # --------------------------------------------------
+from .stack import OperandStack
+from .frame import Frame
 
+
+__all__ = [
+    "OperandStack",
+    "Frame",
+]

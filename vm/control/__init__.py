@@ -30,8 +30,20 @@
 # --------------------------------------------------
 # __init__ MODULE
 # --------------------------------------------------
+"""
+Control-flow management package.
 
+Handles instruction flow, jumps, and call stack
+management from the VM.
+"""
 # --------------------------------------------------
 # imports
 # --------------------------------------------------
+from .flow import ControlFlow
+from .callstack import CallStack
 
+
+__all__ = [
+    "ControlFlow",
+    "CallStack",
+]

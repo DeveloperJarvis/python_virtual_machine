@@ -34,4 +34,41 @@
 # --------------------------------------------------
 # imports
 # --------------------------------------------------
+from vm.core.vm import VirtualMachine
+
+
+def test_jump_if_false():
+    vm = VirtualMachine()
+
+    source = """
+        LOAD_CONST 0
+        JUMP_IF_FALSE 4
+        LOAD_CONST 99
+        STORE_VAR x
+        LOAD_CONST 42
+        STORE_VAR x
+        HALT
+    """
+
+    vm.run_string(source)
+
+    assert vm.globals.get("x") == 42
+
+
+def test_unconditional_jump():
+    vm = VirtualMachine()
+
+    source = """
+        LOAD_CONST 0
+        JUMP 4
+        LOAD_CONST 999
+        STORE_VAR x
+        LOAD_CONST 5
+        STORE_VAR x
+        HALT
+    """
+
+    vm.run_string(source)
+
+    assert vm.globals.get("x") == 5
 

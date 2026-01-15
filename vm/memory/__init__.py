@@ -30,8 +30,20 @@
 # --------------------------------------------------
 # __init__ MODULE
 # --------------------------------------------------
+"""
+Memory management package.
 
+Handles variable namespaces and constant storage
+for the Python Virtual Machine.
+"""
 # --------------------------------------------------
 # imports
 # --------------------------------------------------
+from .namespace import Namespace
+from .constants import ConstantsPool
 
+
+__all__ = [
+    "Namespace",
+    "ConstantsPool",
+]

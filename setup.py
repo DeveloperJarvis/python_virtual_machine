@@ -38,7 +38,7 @@ from setuptools import setup, find_packages
 
 
 setup(
-    name="python_virtual_machine",
+    name="python-virtual-machine",
     version="0.1.0",
     description="Custom Python Virtual Machine for parsing bytecode and executing instructions",
     author="Developer Jarvis",
@@ -47,8 +47,16 @@ setup(
     license="GPL-3.0-or-later",
     packages=find_packages(),
     python_requires=">=3.8",
+    install_requires=[],
+    extras_require={
+        "dev": [
+            "pytest",
+            "black",
+            "flake8",
+        ],
+    },
     classifiers=[
-        "Programming Language :: Python : 3",
+        "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GPU General Public License v3 or later (GPLv3+)",
         "Operating System :: OS Independent",
         "Topic :: Software Development :: Interpreters",

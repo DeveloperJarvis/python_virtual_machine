@@ -30,8 +30,52 @@
 # --------------------------------------------------
 # namespace MODULE
 # --------------------------------------------------
-
+"""
+Variable namespace implementation
+"""
 # --------------------------------------------------
 # imports
 # --------------------------------------------------
 
+
+# --------------------------------------------------
+# namespace
+# --------------------------------------------------
+class Namespace:
+    """
+    Represents a variable namespace (locals or globals).
+    """
+
+    def __init__(self, parent=None):
+        self._values = {}
+        self._parent = parent
+    
+    def get(self, name: str):
+        """
+        Retrieve a variable value.
+        """
+        if name in self._values:
+            return self._values[name]
+        
+        if self._parent is not None:
+            return self._parent.get(name)
+        
+        raise KeyError(f"Variable not found: {name}")
+    
+    def set(self, name: str, value):
+        """
+        Set a variable value.
+        """
+        self._values[name] = value
+    
+    def exists(self, name: str) -> bool:
+        """
+        Check if variable exists in this namespace chain.
+        """
+        if name in self._values:
+            return True
+        
+        if self._parent is not None:
+            return self._parent.exists(name)
+        
+        return False

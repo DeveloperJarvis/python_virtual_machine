@@ -34,4 +34,31 @@
 # --------------------------------------------------
 # imports
 # --------------------------------------------------
+import pytest
 
+from vm.stack import OperandStack
+from vm.errors import StackUnderflowError
+
+
+def test_stack_push_pop():
+    stack = OperandStack()
+    stack.push(1)
+    stack.push(2)
+
+    assert stack.pop() == 2
+    assert stack.pop() == 1
+
+
+def test_stack_peek():
+    stack = OperandStack()
+    stack.push(42)
+
+    assert stack.peek() == 42
+    assert len(stack) == 1
+
+
+def test_stack_underflow():
+    stack = OperandStack()
+
+    with pytest.raises(StackUnderflowError):
+        stack.pop()

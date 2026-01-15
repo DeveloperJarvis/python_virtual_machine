@@ -1,0 +1,1025 @@
+# run_example.py:
+import sys
+from vm.core.vm import VirtualMachine
+vm = VirtualMachine()
+vm.globals.set("add", lambda a, b: a + b)
+vm.run_file(sys.argv[1])
+print("Globals: ", vm.globals._values)
+
+
+# setup.py:
+from setuptools import setup, find_packages
+setup(
+    name="python-virtual-machine",
+    version="0.1.0",
+    description="Custom Python Virtual Machine for parsing bytecode and executing instructions",
+    author="Developer Jarvis",
+    author_email="developerjarvis@github.com",
+    url="https://github.com/DeveloperJarvis/python_virtual_machine",
+    license="GPL-3.0-or-later",
+    packages=find_packages(),
+    python_requires=">=3.8",
+    install_requires=[],
+    extras_require={
+        "dev": [
+            "pytest",
+            "black",
+            "flake8",
+        ],
+    },
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: GPU General Public License v3 or later (GPLv3+)",
+        "Operating System :: OS Independent",
+        "Topic :: Software Development :: Interpreters",
+        "Topic :: Education",
+    ],
+    include_package_data=True,
+    zip_safe=False,
+)
+
+
+# config\_init__.py:
+"""
+Confguration package for the Python Virtual Machine.
+This package centralizes all configuration values used
+across the VM, such as execution flags, debug options,
+and runtime limits.
+"""
+from .config import (
+    DEBUG,
+    TRACE_EXECUTION,
+    MAX_STACK_SIZE,
+    MAX_CALL_DEPTH,
+    LOG_FILE,
+)
+
+
+# config\config.py:
+"""
+Global configuration settings for the Python Virtual Machine.
+"""
+import os
+DEBUG = False
+TRACE_EXECUTION = False
+PROJECT_DIR = os.path.join(os.path.abspath(__file__), "..")
+LOG_FILE = os.path.join(PROJECT_DIR, "logs", "vm.log")
+MAX_STACK_SIZE = 1024
+MAX_CALL_DEPTH = 256
+HALT_ON_ERROR = True
+ALLOW_UNDEFINED_VARS = False
+
+
+# tests\__init__.py:
+"""
+Test suite for the Python Virtual Machine.
+"""
+
+
+# tests\test_bytecode.py:
+import pytest
+from vm.bytecode import BytecodeLoader, BytecodeParser
+from vm.errors import BytecodeError
+def test_bytecode_loader_from_string():
+    source = """
+        LOAD_CONST 10
+        LOAD_CONST 20
+        ADD
+    """
+    loader = BytecodeLoader()
+    result = loader.load_from_file(source)
+    assert result == [
+        "LOAD_CONST 10",
+        "LOAD_CONST 20",
+        "ADD",
+    ]
+def test_bytecode_parser_valid():
+    raw = [
+        "LOAD_CONST 5",
+        "LOAD_CONST 6",
+        "ADD",
+    ]
+    parser = BytecodeParser()
+    parsed = parser.parse(raw)
+    assert parsed[0] == ("LOAD_CONST", ["5"])
+    assert parsed[1] == ("LOAD_CONST", ["6"])
+    assert parsed[2] == ("ADD", [])
+def test_bytecode_parser_invalid_opcode():
+    raw = ["INVALID_OP 123"]
+    parser = BytecodeParser()
+    with pytest.raises(ValueError):
+        parser.parse(raw)
+
+
+# tests\test_control_flow.py:
+from vm.core.vm import VirtualMachine
+def test_jump_if_false():
+    vm = VirtualMachine()
+    source = """
+        LOAD_CONST 0
+        JUMP_IF_FALSE 4
+        LOAD_CONST 99
+        STORE_VAR x
+        LOAD_CONST 42
+        STORE_VAR x
+        HALT
+    """
+    vm.run_string(source)
+    assert vm.globals.get("x") == 42
+def test_unconditional_jump():
+    vm = VirtualMachine()
+    source = """
+        LOAD_CONST 0
+        JUMP 4
+        LOAD_CONST 999
+        STORE_VAR x
+        LOAD_CONST 5
+        STORE_VAR x
+        HALT
+    """
+    vm.run_string(source)
+    assert vm.globals.get("x") == 5
+
+
+# tests\test_execution.py:
+from vm.core.vm import VirtualMachine
+def test_simple_arithmetic_execution():
+    vm = VirtualMachine()
+    source = """
+        LOAD_CONST 2
+        LOAD_CONST 3
+        ADD
+        STORE_VAR result
+        HALT
+    """
+    vm.run_string(source)
+    assert vm.globals.get("result") == 5
+def test_variable_assignment():
+    vm = VirtualMachine()
+    source = """
+        LOAD_CONST 10
+        STORE_VAR x
+        LOAD_VAR x
+        LOAD_CONST 5
+        MUL
+        STORE_VAR y
+        HALT
+    """
+    vm.run_string(source)
+    assert vm.globals.get("x") == 10
+    assert vm.globals.get("y") == 50
+
+
+# tests\test_stack.py:
+import pytest
+from vm.stack import OperandStack
+from vm.errors import StackUnderflowError
+def test_stack_push_pop():
+    stack = OperandStack()
+    stack.push(1)
+    stack.push(2)
+    assert stack.pop() == 2
+    assert stack.pop() == 1
+def test_stack_peek():
+    stack = OperandStack()
+    stack.push(42)
+    assert stack.peek() == 42
+    assert len(stack) == 1
+def test_stack_underflow():
+    stack = OperandStack()
+    with pytest.raises(StackUnderflowError):
+        stack.pop()
+
+
+# tools\_init__.py:
+"""
+Tooling package for the Python Virtual Machine.
+Includes utilities such as:
+- Assembler (text -> bytecode)
+- Disassembler (bytecode -> readable form)
+"""
+from .assembler import Assembler
+from .disassembler import Disassembler
+__all__ = [
+    "Assembler",
+    "Disassembler",
+]
+
+
+# tools\assembler.py:
+from typing import List
+from vm.bytecode.instructions import OPCODES
+from vm.errors import BytecodeError
+class Assembler:
+    """
+    Assmbles human-readable instructions into bytecode.
+    """
+    def assemble(self, source: str) -> List[str]:
+        """
+        Convert assembly source into bytecode lines.
+        """
+        bytecode = []
+        for lineno, line in enumerate(source.splitlines(),
+                                      start=1):
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            parts = line.split()
+            opcode = parts[0]
+            operands = parts[1:]
+            if opcode not in OPCODES:
+                raise BytecodeError(
+                    f"Unknown opcode '{opcode}' at line {lineno}"
+                )
+            bytecode.append(" ".join([opcode, *operands]))
+        return bytecode
+    def assemble_file(self, input_path: str, output_path: str):
+        """
+        Assemble source file into a bytecode file.
+        """
+        with open(input_path, "r", encoding="utf-8") as src:
+            source = src.read()
+        bytecode = self.assemble(source)
+        with open(output_path, "w", encoding="utf-8") as out:
+            for line in bytecode:
+                out.write(line + "\n")
+
+
+# tools\disassembler.py:
+"""
+Bytecode Disassembler.
+Converts VM bytecode into a readable, annotated format.
+"""
+from typing import List, Tuple
+class Disassembler:
+    """
+    Disassembles parsed bytecode instructions.
+    """
+    def disassemble(self, instructions: List[Tuple[str, list]]
+                    ) -> str:
+        """
+        Convert parsed instructions into readable text.
+        """
+        lines = []
+        for index, (opcode, operands) in enumerate(instructions):
+            operand_str = " ".join(operands)
+            line = f"{index:04d}  {opcode}"
+            if operand_str:
+                line += f" {operand_str}"
+            lines.append(line)
+        return "\n".join(lines)
+    def disassemble_file(self, path: str, loader, parser) -> str:
+        """
+        Load and disassemble a bytecode file.
+        """
+        raw = loader.load_from_file(path)
+        instructions = parser.parse(raw)
+        return self.disassemble(instructions)
+
+
+# vm\__init__.py:
+"""
+Python Virtual Machine package.
+This package provides a custom, stack-based virtual machine
+for parsing bytecode and executing instructions.
+"""
+__all__ = [
+    "bytecode",
+    "control",
+    "core",
+    "errors",
+    "memory",
+    "stack",
+    "utils",
+]
+
+
+# vm\bytecode\__init__.py:
+"""
+Bytecode handling package.
+Responsible for loading, parsing and representing
+bytecode instructions executed by the VM.
+"""
+from .loader import BytecodeLoader
+from .parser import BytecodeParser
+__all__ = [
+    "BytecodeLoader",
+    "BytecodeParser",
+]
+
+
+# vm\bytecode\instructions.py:
+"""
+Instructions definitions for the Python Virtual Machine.
+This module defines all supported opcodes and provides
+metadata used by the parser and execution engine.
+"""
+from typing import Dict, Callable, List, Optional
+class Instruction:
+    """
+    Represents a single VM instruction.
+    """
+    def __init__(
+            self,
+            name: str,
+            operand_count: int = 0,
+            description: Optional[str] = None,
+        ):
+        self.name = name
+        self.operand_count = operand_count
+        self.description = description or ""
+    def __repr__(self) -> str:
+        return (f"Instruction(name={self.name}, "
+                f"operands={self.operand_count})")
+INSTRUCTION_SET: Dict[str, Instruction] = {
+    "LOAD_CONST": Instruction(
+        name="LOAD_CONST",
+        operand_count=1,
+        description="Push constant onto the operand stack",
+    ),
+    "LOAD_VAR": Instruction(
+        name="LOAD_VAR",
+        operand_count=1,
+        description="Load operand value onto the stack",
+    ),
+    "STORE_VAR": Instruction(
+        name="STORE_VAR",
+        operand_count=1,
+        description="Store top of stack into variable",
+    ),
+    "ADD": Instruction(
+        name="ADD",
+        description="Add top two values on the stack",
+    ),
+    "SUB": Instruction(
+        name="SUB",
+        description="Subtract top two values on the stack",
+    ),
+    "MUL": Instruction(
+        name="MUL",
+        description="Multiply top two values on the stack",
+    ),
+    "DIV": Instruction(
+        name="DIV",
+        description="Divide top two values on the stack",
+    ),
+    "POP_TOP": Instruction(
+        name="POP_TOP",
+        description="Remove top of stack",
+    ),
+    "DUP_TOP": Instruction(
+        name="BUP_TOP",
+        description="Duplicate top of stack",
+    ),
+    "JUMP": Instruction(
+        name="JUMP",
+        operand_count=1,
+        description="Unconditional jump",
+    ),
+    "JUMP_IF_TRUE": Instruction(
+        name="JUMP_IF_TRUE",
+        operand_count=1,
+        description="Jump if condition is true",
+    ),
+    "JUMP_IF_FALSE": Instruction(
+        name="JUMP_IF_FALSE",
+        operand_count=1,
+        description="Jump if condition is false",
+    ),
+    "CALL_FUNC": Instruction(
+        name="CALL_FUNC",
+        operand_count=1,
+        description="Call function with N argumnets",
+    ),
+    "RETURN_VAL": Instruction(
+        name="RETURN_VAL",
+        description="Return value from function",
+    ),
+    "HALT": Instruction(
+        name="HALT",
+        description="Stop VM execution",
+    ),
+}
+OPCODES = set(INSTRUCTION_SET.keys())
+def get_instruction(name: str) -> Instruction:
+    """
+    Retrieve instruction metadata by opcode name.
+    """
+    return INSTRUCTION_SET[name]
+
+
+# vm\bytecode\loader.py:
+"""
+Bytecode Loader.
+Responsible for loading raw bytecode from a source.
+The loader does not interpret instructions; it only
+reads and normalizes input for the parser.
+"""
+import os
+from typing import List
+class BytecodeLoader:
+    """
+    Loads bytecode from filles or in-memory sources.
+    """
+    def load_from_file(self, path: str) -> List[str]:
+        """
+        Load bytecode instructions from a file.
+        Each non-empty, non-comment line is treated as
+        a single instruction.
+        """
+        if "\n" in path or not os.path.exists(path):
+            return self.load_from_string(path)
+        instructions = []
+        with open(path, "r", encoding="utf-8") as file:
+            for line in file:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                instructions.append(line)
+        return instructions
+    def load_from_string(self, source: str) -> List[str]:
+        """
+        Load bytecode instructions from a string.
+        """
+        instructions = []
+        for line in source.splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            instructions.append(line)
+        return instructions
+
+
+# vm\bytecode\parser.py:
+"""
+Bytecode Parser.
+Transforms raw bytecode lines into structured
+instructions representations usable by the VM.
+"""
+from typing import List, Tuple
+from .instructions import OPCODES
+class BytecodeParser:
+    """
+    Parses raw bytecode lines into instructions.
+    """
+    def parse(self, raw_instructions: List[str]
+              ) -> List[Tuple[str, List[str]]]:
+        """
+        Parse raw instruction strings into (opcode, operands).
+        Example:
+            "LOAD_CONST 10"
+            -> ("LOAD_CONST", ["10"])
+        """
+        parsed_instructions = []
+        for index, line in enumerate(raw_instructions):
+            parts = line.split()
+            opcode = parts[0]
+            operands = parts[1:]
+            if opcode not in OPCODES:
+                raise ValueError(
+                    f"Invalid opcode '{opcode}' at instruction"
+                    f" {index}"
+                )
+            parsed_instructions.append((opcode, operands))
+        return parsed_instructions
+
+
+# vm\control\__init__.py:
+"""
+Control-flow management package.
+Handles instruction flow, jumps, and call stack
+management from the VM.
+"""
+from .flow import ControlFlow
+from .callstack import CallStack
+__all__ = [
+    "ControlFlow",
+    "CallStack",
+]
+
+
+# vm\control\callstack.py:
+"""
+Call stack implementation.
+"""
+from config.config import MAX_CALL_DEPTH
+from vm.errors import CallStackOverflowError
+class CallStack:
+    """
+    Manages execution frames.
+    """
+    def __init__(self):
+        self._frames = []
+    def push(self, frame):
+        """
+        Push a new frame onto the call stack.
+        """
+        if len(self._frames) >= MAX_CALL_DEPTH:
+            raise CallStackOverflowError(
+                "Maximum call stack depth exceeded"
+            )
+        self._frames.append(frame)
+    def pop(self):
+        """
+        Pop the current frame.
+        """
+        return self._frames.pop()
+    def current(self):
+        """
+        Get the current frame.
+        """
+        if not self._frames:
+            return None
+        return self._frames[-1]
+    def is_empty(self) -> bool:
+        return not self._frames
+
+
+# vm\control\flow.py:
+"""
+Control flow operations.
+"""
+from vm.errors import RuntimeExecutionError
+class ControlFlow:
+    """
+    Handles jump and branching logic.
+    """
+    @staticmethod
+    def jump(frame, target: int):
+        """
+        Perform an unconditional jump.
+        """
+        if target < 0 or target >= len(frame.instructions):
+            raise RuntimeExecutionError(
+                f"Invalid jump target: {target}"
+            )
+        frame.jump(target)
+    @staticmethod
+    def jump_if_true(frame, condition, target: int):
+        """
+        Jump if condition evaluates to True.
+        """
+        if condition:
+            ControlFlow.jump(frame, target)
+    @staticmethod
+    def jump_if_false(frame, condition, target: int):
+        """
+        Jump if condition evaluates to False.
+        """
+        if not condition:
+            ControlFlow.jump(frame, target)
+
+
+# vm\core\engine.py:
+"""
+Instruction execution engine.
+"""
+from vm.bytecode.instructions import get_instruction
+from vm.control import ControlFlow
+from vm.errors import (
+    InvalidOpcodeError,
+    RuntimeExecutionError,
+)
+from vm.utils import debug_log, trace_instruction
+class ExecutionEngine:
+    """
+    Executes parsed instructions within a frame.
+    """
+    def execute(self, frame, callstack):
+        """
+        Execute instructions until frame completes.
+        """
+        while True:
+            instr = frame.next_instruction()
+            if instr is None:
+                return
+            opcode, operands = instr
+            trace_instruction(frame.ip - 1, opcode, operands,
+                              frame.stack)
+            try:
+                self.dispatch(opcode, operands, frame,
+                              callstack)
+            except Exception as exc:
+                raise RuntimeExecutionError(str(exc)) from exc
+    def dispatch(self, opcode, operands, frame, callstack):
+        """
+        Dispatch opcode to handler.
+        """
+        handler_name = f"op_{opcode.lower()}"
+        if not hasattr(self, handler_name):
+            raise InvalidOpcodeError(opcode)
+        handler = getattr(self, handler_name)
+        handler(operands, frame, callstack)
+    def op_load_const(self, operands, frame, _):
+        value = operands[0]
+        frame.stack.push(self._parse_literal(value))
+    def op_load_var(self, operands, frame, _):
+        name = operands[0]
+        frame.stack.push(frame.locals.get(name))
+    def op_store_var(self, operands, frame, _):
+        name = operands[0]
+        value = frame.stack.pop()
+        frame.locals.set(name, value)
+    def op_add(self, _, frame, __):
+        b = frame.stack.pop()
+        a = frame.stack.pop()
+        frame.stack.push(a + b)
+    def op_sub(self, _, frame, __):
+        b = frame.stack.pop()
+        a = frame.stack.pop()
+        frame.stack.push(a - b)
+    def op_mul(self, _, frame, __):
+        b = frame.stack.pop()
+        a = frame.stack.pop()
+        frame.stack.push(a * b)
+    def op_div(self, _, frame, __):
+        b = frame.stack.pop()
+        a = frame.stack.pop()
+        frame.stack.push(a / b)
+    def op_jump(self, operands, frame, __):
+        ControlFlow.jump(frame, int(operands[0]))
+    def op_jump_if_true(self, operands, frame, __):
+        condition = frame.stack.pop()
+        ControlFlow.jump_if_true(frame, condition,
+                                 int(operands[0]))
+    def op_jump_if_false(self, operands, frame, __):
+        condition = frame.stack.pop()
+        ControlFlow.jump_if_false(frame, condition,
+                                  int(operands[0]))
+    def op_pop_top(self, _, frame, __):
+        frame.stack.pop()
+    def op_dup_top(self, _, frame, __):
+        value = frame.stack.peek()
+        frame.stack.push(value)
+    def op_return_val(self, _, frame, callstack):
+        value = frame.stack.pop()
+        callstack.pop()
+        caller = callstack.current()
+        if caller:
+            caller.stack.push(value)
+    def op_halt(self, _, frame, callstack):
+        callstack.pop()
+    def op_call_func(self, operands, frame, _):
+        """
+        Call a Python callable stored on the stack.
+        CALL_FUNC <arg_count>
+        """
+        arg_count = int(operands[0])
+        args = []
+        for _ in range(arg_count):
+            args.append(frame.stack.pop())
+        args.reverse()
+        func = frame.stack.pop()
+        if not callable(func):
+            raise RuntimeExecutionError("Object is not callable")
+        result = func(*args)
+        frame.stack.push(result)
+    def _parse_literal(self, value: str):
+        """
+        Convert literal string to Python value.
+        """
+        if value.isdigit():
+            return int(value)
+        try:
+            return float(value)
+        except ValueError:
+            return value.strip('"')
+
+
+# vm\core\runtime.py:
+"""
+Runtime coordination.
+"""
+from vm.control import CallStack
+from vm.core.engine import ExecutionEngine
+class Runtime:
+    """
+    Coordinates execution engine and call stack
+    """
+    def __init__(self):
+        self.callstack = CallStack()
+        self.engine = ExecutionEngine()
+    def run(self, frame):
+        """
+        Start execution with an initial frame.
+        """
+        self.callstack.push(frame)
+        self.engine.execute(frame, self.callstack)
+
+
+# vm\core\vm.py:
+"""
+Top-level Virtual Machine interface.
+"""
+from vm.bytecode import BytecodeLoader, BytecodeParser
+from vm.core.runtime import Runtime
+from vm.memory import Namespace
+from vm.stack import Frame
+from vm.utils import debug_log
+class VirtualMachine:
+    """
+    Python Virtual Machine.
+    """
+    def __init__(self):
+        self.loader = BytecodeLoader()
+        self.parser = BytecodeParser()
+        self.runtime = Runtime()
+        self.globals = Namespace()
+    def run_file(self, path: str):
+        """
+        Execute bytecode from file.
+        """
+        debug_log(f"Loading bytecode from {path}")
+        raw = self.loader.load_from_file(path)
+        instructions = self.parser.parse(raw)
+        frame = Frame(instructions, self.globals,
+                      locals_ns=self.globals)
+        self.runtime.run(frame)
+    def run_string(self, source: str):
+        """
+        Execute bytecode from string.
+        """
+        raw = self.loader.load_from_string(source)
+        instructions = self.parser.parse(raw)
+        frame = Frame(instructions, self.globals,
+                      locals_ns=self.globals)
+        self.runtime.run(frame)
+
+
+# vm\errors\__init__.py:
+"""
+VM error handling package.
+Defines all custom exceptions raised during
+bytecode parsing and execution.
+"""
+from .exceptions import (
+    VMError,
+    BytecodeError,
+    InvalidOpcodeError,
+    StackUnderflowError,
+    StackOverflowError,
+    VariableNotFoundError,
+    RuntimeExecutionError,
+    CallStackOverflowError,
+)
+__all__ = [
+    "VMError",
+    "BytecodeError",
+    "InvalidOpcodeError",
+    "StackUnderflowError",
+    "StackOverflowError",
+    "VariableNotFoundError",
+    "RuntimeExecutionError",
+    "CallStackOverflowError",
+]
+
+
+# vm\errors\exceptions.py:
+"""
+Custom exceptions for the Python Virtual Machine.
+"""
+class VMError(Exception):
+    """
+    Base class for all VM-related errors.
+    """
+class BytecodeError(VMError):
+    """
+    Raised when bytecode is malformed or invalid.
+    """
+    pass
+class InvalidOpcodeError(BytecodeError):
+    """
+    Raised when an unknown or unsupported opcode is encountered.
+    """
+    def __init__(self, opcode: str):
+        super().__init__(f"Invalid opcode: {opcode}")
+        self.opcode = opcode
+class StackUnderflowError(VMError):
+    """
+    Raised when popping from an empty operand stack.
+    """
+    pass
+class StackOverflowError(VMError):
+    """
+    Raised when the operand stack exceeds its maximum size.
+    """
+    pass
+class RuntimeExecutionError(VMError):
+    """
+    Raised when a runtime execution error occurs.
+    """
+    pass
+class VariableNotFoundError(RuntimeExecutionError):
+    """
+    Raised when accessing an undefined variable.
+    """
+    def __init__(self, name: str):
+        super().__init__(f"Variable not found: {name}")
+        self.name = name
+class CallStackOverflowError(RuntimeExecutionError):
+    """
+    Raised when the call stack exceeds its maximum depth.
+    """
+    pass
+
+
+# vm\memory\__init__.py:
+"""
+Memory management package.
+Handles variable namespaces and constant storage
+for the Python Virtual Machine.
+"""
+from .namespace import Namespace
+from .constants import ConstantsPool
+__all__ = [
+    "Namespace",
+    "ConstantsPool",
+]
+
+
+# vm\memory\constants.py:
+"""
+Constants pool.
+Stores immutable constants used by bytecode.
+"""
+class ConstantsPool:
+    """
+    Manages constants referenced by bytecode.
+    """
+    def __init__(self):
+        self._constants = []
+    def add(self, value):
+        """
+        Add a constant and return its index.
+        """
+        self._constants.append(value)
+        return len(self._constants) - 1
+    def get(self, index: int):
+        """
+        Retrieve a constant by index.
+        """
+        try:
+            return self._constants[index]
+        except IndexError:
+            raise IndexError(f"Invalid constant index: {index}")
+    def __len__(self):
+        return len(self._constants)
+
+
+# vm\memory\namespace.py:
+"""
+Variable namespace implementation
+"""
+class Namespace:
+    """
+    Represents a variable namespace (locals or globals).
+    """
+    def __init__(self, parent=None):
+        self._values = {}
+        self._parent = parent
+    def get(self, name: str):
+        """
+        Retrieve a variable value.
+        """
+        if name in self._values:
+            return self._values[name]
+        if self._parent is not None:
+            return self._parent.get(name)
+        raise KeyError(f"Variable not found: {name}")
+    def set(self, name: str, value):
+        """
+        Set a variable value.
+        """
+        self._values[name] = value
+    def exists(self, name: str) -> bool:
+        """
+        Check if variable exists in this namespace chain.
+        """
+        if name in self._values:
+            return True
+        if self._parent is not None:
+            return self._parent.exists(name)
+        return False
+
+
+# vm\stack\__init__.py:
+"""
+Stack management package.
+Provides operand stack and execution frame
+implementaions for the VM.
+"""
+from .stack import OperandStack
+from .frame import Frame
+__all__ = [
+    "OperandStack",
+    "Frame",
+]
+
+
+# vm\stack\frame.py:
+"""
+Execution frame implementation.
+"""
+from vm.stack import OperandStack
+from vm.memory import Namespace
+class Frame:
+    """
+    Represents a single execution frame.
+    """
+    def __init__(self, instructions, globals_ns, locals_ns=None):
+        self.instructions = instructions
+        self.ip = 0
+        self.stack = OperandStack()
+        self.locals = locals_ns or Namespace(parent=globals_ns)
+        self.globals = globals_ns
+    def next_instruction(self):
+        """
+        Fetch the next instruction and advance IP.
+        """
+        if self.ip >= len(self.instructions):
+            return None
+        instr = self.instructions[self.ip]
+        self.ip += 1
+        return instr
+    def jump(self, target: int):
+        """
+        Set instruction pointer.
+        """
+        self.ip = target
+
+
+# vm\stack\stack.py:
+"""
+Operand stack implementation.
+"""
+from vm.errors import StackOverflowError, StackUnderflowError
+from config.config import MAX_STACK_SIZE
+class OperandStack:
+    """
+    Stack used for operand storage during execution.
+    """
+    def __init__(self):
+        self._stack = []
+    def push(self, value):
+        """
+        Push a value onto the stack.
+        """
+        if len(self._stack) >= MAX_STACK_SIZE:
+            raise StackOverflowError("Operand stack overflow")
+        self._stack.append(value)
+    def pop(self):
+        """
+        Pop a value from the stack.
+        """
+        if not self._stack:
+            raise StackUnderflowError("Operand stack underflow")
+        return self._stack.pop()
+    def peek(self):
+        """
+        Peek at the top value without popping.
+        """
+        if not self._stack:
+            raise StackUnderflowError("Operand stack underflow")
+        return self._stack[-1]
+    def clear(self):
+        """
+        Clear the stack.
+        """
+        self._stack.clear()
+    def __len__(self):
+        return len(self._stack)
+
+
+# vm\utils\__init__.py:
+"""
+Utility helpers for the VM.
+"""
+from .debug import debug_log, trace_instruction
+__all__ = [
+    "debug_log",
+    "trace_instruction",
+]
+
+
+# vm\utils\debug.py:
+"""
+Debug and tracing utilities.
+"""
+from config.config import DEBUG, TRACE_EXECUTION
+def debug_log(message: str):
+    """
+    Print debug message if DEBIG is enabled.
+    """
+    if DEBUG:
+        print(f"[DEBUG] {message}")
+def trace_instruction(ip, opcode, operands, stack):
+    """
+    Trace instruction execution if tracing is enabled.
+    """
+    if TRACE_EXECUTION:
+        print(
+            f"[TRACE] IP={ip} | {opcode} {operands} | "
+            f"STACK={list(stack._stack)}"
+        )
+
+
